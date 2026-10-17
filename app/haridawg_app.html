@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HARIDAWG APP</title>
+<style>
+:root{
+  --bg:#080d1a; --panel:rgba(9,16,32,.74); --line:#1e293b; --cyan:#22d3ee; --sky:#38bdf8;
+  --green:#34d399; --red:#f87171; --amber:#fbbf24; --text:#e2e8f0; --muted:#94a3b8;
+  --mono:Consolas,"Cascadia Mono","SFMono-Regular",Menlo,monospace;
+  --sans:"Segoe UI",system-ui,-apple-system,Roboto,sans-serif;
+}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);overflow-x:hidden;user-select:none}
+#rain{position:fixed;inset:0;width:100%;height:100%;z-index:0;opacity:.75}
+.shade{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse at 50% 0%,rgba(8,13,26,.15),rgba(8,13,26,.75) 75%)}
+.app{position:relative;z-index:1;max-width:820px;margin:0 auto;padding:20px 14px 28px;min-height:100%;display:flex;flex-direction:column;gap:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.mono{font-family:var(--mono)}
+
+/* header */
+header.card{padding:18px 20px;border-color:rgba(34,211,238,.35);box-shadow:0 0 28px rgba(34,211,238,.14);
+  display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between}
+.brand{display:flex;align-items:center;gap:14px}
+.logo{width:48px;height:48px;border-radius:12px;display:grid;place-items:center;
+  background:linear-gradient(135deg,#0891b2,#2563eb);border:1px solid rgba(165,243,252,.35);box-shadow:0 0 18px rgba(34,211,238,.35)}
+h1{font-size:28px;font-weight:800;letter-spacing:.12em;line-height:1.1;
+  background:linear-gradient(90deg,#22d3ee,#e0f2fe,#3b82f6);-webkit-background-clip:text;background-clip:text;color:transparent;
+  text-shadow:0 0 14px rgba(34,211,238,.35)}
+.sub{font:12px var(--mono);color:rgba(34,211,238,.8);letter-spacing:.18em;display:flex;align-items:center;gap:8px;margin-top:3px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 1.6s infinite}
+@keyframes pulse{50%{opacity:.25}}
+.clock{font-family:var(--mono);background:rgba(2,6,23,.75);border:1px solid rgba(34,211,238,.22);border-radius:12px;padding:10px 16px;min-width:230px}
+.clock div{display:flex;justify-content:space-between;gap:16px;font-size:13px}
+.clock div+div{margin-top:5px;padding-top:5px;border-top:1px solid var(--line)}
+.clock b{color:var(--cyan);font-weight:600}
+#utcClock{color:var(--green);font-weight:700;text-shadow:0 0 10px rgba(52,211,153,.5)}
+
+/* accordion */
+.acc>button.head{all:unset;box-sizing:border-box;width:100%;cursor:pointer;padding:15px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;border-radius:14px}
+.acc>button.head:hover{background:rgba(30,41,59,.45)}
+.acc>button.head:focus-visible,.btn:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+.acc{border-left:3px solid var(--accent,var(--cyan))}
+.title{font-weight:800;letter-spacing:.06em;font-size:16px}
+.path{font:13px var(--mono);color:var(--cyan);margin-left:10px;word-break:break-all}
+.chev{width:10px;height:10px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);transition:transform .3s;margin:-4px 4px 0 0;flex:none}
+.acc.open>button.head .chev{transform:rotate(225deg);margin:4px 4px 0 0}
+.body{display:grid;grid-template-rows:0fr;transition:grid-template-rows .3s ease}
+.acc.open>.body{grid-template-rows:1fr}
+.body>.inner{overflow:hidden}
+.pad{padding:4px 18px 18px;border-top:1px solid var(--line);padding-top:16px;display:flex;flex-direction:column;gap:12px}
+
+/* controls */
+input[type=text],input[type=number]{background:#0b1222;border:1px solid #334155;border-radius:9px;padding:9px 12px;color:var(--text);font:13px var(--mono);min-width:0;user-select:text}
+input:focus{border-color:var(--cyan)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.grow{flex:1}
+.chip{font:12px var(--mono);padding:5px 10px;border-radius:7px;border:1px solid #334155;background:#111b30;color:#cbd5e1;cursor:pointer}
+.chip:hover{border-color:var(--cyan);color:#fff}
+.btn{cursor:pointer;border:1px solid;border-radius:10px;padding:12px 16px;font:800 15px var(--sans);letter-spacing:.08em;color:#fff;
+  display:flex;align-items:center;justify-content:space-between;gap:10px;transition:transform .12s,background .2s,box-shadow .2s;width:100%}
+.btn:active{transform:scale(.98)}
+.btn small{font:600 11px var(--mono);letter-spacing:.04em;opacity:.85}
+.btn.scan{background:rgba(8,70,96,.55);border-color:rgba(34,211,238,.55)}
+.btn.scan:hover{background:#0e7490;box-shadow:0 0 22px rgba(34,211,238,.3)}
+.btn.del{background:rgba(90,16,28,.55);border-color:rgba(248,113,113,.55)}
+.btn.del:hover{background:#b91c1c;box-shadow:0 0 22px rgba(248,113,113,.28)}
+.btn.add{width:auto;background:#162033;border-color:#334155;color:#a5f3fc;padding:9px 14px;font-size:12px}
+.btn.add:hover{background:#0e7490;color:#fff}
+.arrow{color:var(--cyan);margin-left:6px}
+.del .arrow{color:var(--red)}
+
+/* device */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:640px){.grid2{grid-template-columns:1fr}.clock{width:100%}}
+.mini{background:rgba(15,23,42,.85);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:9px}
+.mini .top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-weight:700;font-size:14px}
+.tag{font:11px var(--mono);padding:2px 8px;border-radius:6px;border:1px solid;white-space:nowrap}
+.tag.c{color:#67e8f9;border-color:#155e75;background:#083344}
+.tag.g{color:#6ee7b7;border-color:#065f46;background:#022c22}
+.kv{font:12px var(--mono);color:var(--muted);display:flex;justify-content:space-between;gap:10px}
+.bar{height:8px;border-radius:99px;background:#050a16;border:1px solid var(--line);overflow:hidden}
+.bar i{display:block;height:100%;border-radius:99px;transition:width .6s}
+.disk{background:rgba(2,6,23,.7);border:1px solid var(--line);border-radius:10px;padding:11px 12px;display:flex;flex-direction:column;gap:7px}
+.disk .kv span:first-child{font-weight:700}
+.note{font:12px var(--mono);color:var(--amber);background:rgba(251,191,36,.07);border:1px solid rgba(251,191,36,.3);border-radius:9px;padding:9px 12px;line-height:1.5}
+.substore{background:rgba(15,23,42,.85);border:1px solid var(--line);border-radius:12px}
+.substore.acc{border-left:1px solid var(--line)}
+.substore>button.head{padding:12px 14px}
+
+/* status */
+#status{display:none;padding:14px 16px;font:12px var(--mono);flex-direction:column;gap:8px;border-color:rgba(34,211,238,.35)}
+#status.show{display:flex}
+#status .top{display:flex;justify-content:space-between;font-weight:700}
+#sLog{color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+footer.card{padding:16px 20px;display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:space-between;margin-top:auto}
+.info small{font:11px var(--mono);color:var(--muted);letter-spacing:.14em;display:block}
+.info b{font-size:14px;letter-spacing:.06em}
+.info b em{font-style:normal;font-weight:800;background:linear-gradient(90deg,#22d3ee,#c084fc);-webkit-background-clip:text;background-clip:text;color:transparent}
+.links{display:flex;gap:10px;flex-wrap:wrap}
+.links a{text-decoration:none;font:700 12px var(--sans);letter-spacing:.06em;padding:9px 16px;border-radius:10px;border:1px solid;transition:background .2s,color .2s}
+.links .dc{color:#8b94ff;border-color:rgba(88,101,242,.5);background:rgba(88,101,242,.15)}
+.links .dc:hover{background:#5865f2;color:#fff}
+.links .zy{color:#d8b4fe;border-color:rgba(168,85,247,.5);background:rgba(168,85,247,.14)}
+.links .zy:hover{background:#9333ea;color:#fff}
+#boot{position:fixed;inset:0;z-index:50;background:#080d1a;display:grid;place-items:center;font:700 22px var(--mono);letter-spacing:.35em;color:var(--cyan);text-align:center;animation:bootout .5s .6s forwards;pointer-events:none}
+@keyframes bootout{to{opacity:0;visibility:hidden}}
+#logs{font:12px var(--mono);color:#a5f3fc;max-height:170px;overflow:auto;white-space:pre-wrap;user-select:text}
+.find{display:flex;gap:8px;font:12px var(--mono);padding:5px 0;align-items:flex-start;cursor:pointer;word-break:break-all;color:#fecaca}
+select{background:#0b1222;color:var(--text);border:1px solid #334155;border-radius:7px;padding:3px 6px;font:12px var(--mono)}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div id="boot"><span>HARIDAWG</span></div>
+<canvas id="rain" aria-hidden="true"></canvas>
+<div class="shade"></div>
+
+<div class="app">
+
+  <header class="card">
+    <div class="brand">
+      <div class="logo">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l8 3v6c0 5-3.4 9.3-8 11-4.6-1.7-8-6-8-11V5z"/><path d="M9 12l2 2 4-4"/></svg>
+      </div>
+      <div>
+        <h1>HARIDAWG APP</h1>
+        <div class="sub"><span class="dot"></span>SYSTEM UTILITY &amp; SCANNER</div>
+      </div>
+    </div>
+    <div class="clock">
+      <div><b>DAY:</b><span id="day">--</span></div>
+      <div><b>TIME UTC:</b><span id="utcClock">--:--:-- UTC</span></div>
+      <div><b data-i="lang">Language</b><select id="lang" aria-label="Language"><option value="en">English</option><option value="vi">Tiếng Việt</option><option value="zh">中文</option><option value="ru">Русский</option></select></div>
+    </div>
+  </header>
+
+  <!-- FOLDER -->
+  <section class="card acc" id="accFolder" style="--accent:#fbbf24">
+    <button class="head" aria-expanded="false">
+      <span><span class="title" data-i="folder">FOLDER:</span><span class="path" id="folderPath" data-i="all">(all drives)</span></span>
+      <span class="chev"></span>
+    </button>
+    <div class="body"><div class="inner"><div class="pad">
+      <div class="row">
+        <span class="mono" style="font-size:12px;color:var(--muted)" data-i="quick">Quick targets:</span>
+        <button class="chip" data-q="Downloads">Downloads</button>
+        <button class="chip" data-q="Desktop">Desktop</button>
+        <button class="chip" data-q="Documents">Documents</button>
+        <button class="chip" data-q="">All drives</button>
+      </div>
+      <div class="row">
+        <input type="text" id="folderInput" class="grow" placeholder="Paste folder path, e.g. D:\Games" spellcheck="false">
+        <button class="btn add" id="setFolder" data-i="setb">Set</button>
+      </div>
+      <button class="btn scan" id="btnScan"><span>SCAN <span class="arrow">=&gt;</span></span><small data-i="scanSub">quick threat scan</small></button>
+      <button class="btn del" id="btnDel"><span>DELETE <span class="arrow">=&gt;</span></span><small data-i="delSub">clean detected threats</small></button>
+    </div></div></div>
+  </section>
+
+  <div class="card" id="status" role="status" aria-live="polite">
+    <div class="top"><span id="sTitle"></span><span id="sPct">0%</span></div>
+    <div class="bar"><i id="sBar" style="width:0"></i></div>
+    <div id="sLog"></div>
+  </div>
+
+  <div class="card" id="logbox" style="display:none;padding:12px 16px"><div class="mono" style="font-size:11px;color:var(--muted);letter-spacing:.14em;margin-bottom:6px" data-i="log">SCAN LOG</div><pre id="logs"></pre><div id="finds"></div></div>
+
+  <!-- DEVICE -->
+  <section class="card acc" id="accDevice" style="--accent:#22d3ee">
+    <button class="head" aria-expanded="false">
+      <span class="title" data-i="dev">Your Device Information</span>
+      <span class="chev"></span>
+    </button>
+    <div class="body"><div class="inner"><div class="pad">
+      <div id="devNote" class="note" style="display:none"></div>
+      <div class="grid2">
+        <div class="mini">
+          <div class="top"><span>RAM</span><span class="tag c" id="ramTag">--</span></div>
+          <div class="kv"><span>Usage</span><span id="ramTxt">--</span></div>
+          <div class="bar"><i id="ramBar" style="width:0;background:linear-gradient(90deg,#06b6d4,#3b82f6)"></i></div>
+        </div>
+        <div class="mini">
+          <div class="top"><span>CHIP</span><span class="tag g" id="cpuTag">--</span></div>
+          <div class="mono" id="cpuName" style="font-size:13px;color:var(--green);font-weight:700">--</div>
+          <div class="kv"><span id="cpuClock">--</span><span id="cpuLoad"></span></div>
+        </div>
+      </div>
+
+      <div class="substore acc" id="accStorage" style="--accent:#38bdf8">
+        <button class="head" aria-expanded="false">
+          <span><span style="font-weight:700;font-size:14px" data-i="storage">STORAGE</span><span class="mono" style="font-size:12px;color:var(--muted);margin-left:12px" id="stSum">--</span></span>
+          <span class="chev"></span>
+        </button>
+        <div class="body"><div class="inner"><div class="pad" style="border-top:1px solid var(--line)">
+          <div id="disks" style="display:flex;flex-direction:column;gap:10px"></div>
+          <div class="row" style="padding-top:4px">
+            <input type="text" id="dName" class="grow" placeholder="DISK + name (e.g. F: USB)" style="min-width:150px">
+            <input type="number" id="dFree" placeholder="Free GB" style="width:110px" min="0">
+            <input type="number" id="dTotal" placeholder="Total GB" style="width:116px" min="1">
+            <button class="btn add" id="addDisk">+ Add disk</button>
+          </div>
+        </div></div></div>
+      </div>
+    </div></div></div>
+  </section>
+
+  <!-- FUNCTION -->
+  <section class="card acc" id="accFunc" style="--accent:#34d399">
+    <button class="head" aria-expanded="false">
+      <span class="title" data-i="func">Function:</span>
+      <span class="chev"></span>
+    </button>
+    <div class="body"><div class="inner"><div class="pad">
+      <button class="btn scan" id="btnScan2"><span>SCAN</span><small data-i="runSel">run on selected folder</small></button>
+    </div></div></div>
+  </section>
+
+  <footer class="card">
+    <div class="info">
+      <small data-i="info">INFORMATION</small>
+      <b><span data-i="by">APP CREATE BY</span> <em>HARIDWG</em></b>
+    </div>
+    <div class="links">
+      <a class="dc" href="https://discord.gg/sQusu2fand" target="_blank" rel="noopener noreferrer">DISCORD</a>
+      <a class="zy" href="https://zyo.lol/haridwg" target="_blank" rel="noopener noreferrer">ZYO OWN</a>
+    </div>
+  </footer>
+</div>
+
+<!-- Optional: written by HARIDAWG.bat with real PC info. Ignored if missing. -->
+<script src="sysinfo.js" onerror="void 0"></script>
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id)};
+  var L={
+   en:{lang:'Language',log:'SCAN LOG',folder:'FOLDER:',quick:'Quick targets:',setb:'Set',scanSub:'scan processes + files with Windows Defender',delSub:'move checked findings to quarantine',dev:'Your Device Information',storage:'STORAGE',func:'Function:',runSel:'run on selected folder',info:'INFORMATION',by:'APP CREATE BY',all:'(all drives)',needBat:'Real scan needs HARIDAWG.bat. Close this and open the app with HARIDAWG.bat.',scanning:'SCANNING...',done:'SCAN FINISHED',none:'Nothing needs attention.',nothing:'Nothing selected. Run SCAN, tick the items, then DELETE.',confirmDel:'Move selected files to quarantine?',restart:'RESTARTING...'},
+   vi:{lang:'Ngôn ngữ',log:'NHẬT KÝ QUÉT',folder:'THƯ MỤC:',quick:'Chọn nhanh:',setb:'Đặt',scanSub:'quét tiến trình + tệp bằng Windows Defender',delSub:'chuyển mục đã tick vào khu cách ly',dev:'Thông tin thiết bị của bạn',storage:'Ổ ĐĨA',func:'Chức năng:',runSel:'chạy trên thư mục đã chọn',info:'THÔNG TIN',by:'APP TẠO BỞI',all:'(tất cả ổ)',needBat:'Quét thật cần HARIDAWG.bat. Hãy đóng và mở app bằng HARIDAWG.bat.',scanning:'ĐANG QUÉT...',done:'QUÉT XONG',none:'Không có gì cần xử lý.',nothing:'Chưa chọn gì. Hãy SCAN, tick các mục rồi bấm DELETE.',confirmDel:'Chuyển các tệp đã chọn vào khu cách ly?',restart:'ĐANG KHỞI ĐỘNG LẠI...'},
+   zh:{lang:'语言',log:'扫描日志',folder:'文件夹:',quick:'快速选择:',setb:'设置',scanSub:'用 Windows Defender 扫描进程和文件',delSub:'将勾选的项目移入隔离区',dev:'您的设备信息',storage:'存储',func:'功能:',runSel:'扫描所选文件夹',info:'信息',by:'应用作者',all:'(所有磁盘)',needBat:'真实扫描需要 HARIDAWG.bat。请关闭后用 HARIDAWG.bat 打开。',scanning:'扫描中...',done:'扫描完成',none:'没有需要处理的项目。',nothing:'未选择。请先扫描，勾选项目后再点 DELETE。',confirmDel:'将所选文件移入隔离区?',restart:'正在重启...'},
+   ru:{lang:'Язык',log:'ЖУРНАЛ СКАНА',folder:'ПАПКА:',quick:'Быстрый выбор:',setb:'Задать',scanSub:'скан процессов и файлов через Windows Defender',delSub:'переместить отмеченное в карантин',dev:'Информация об устройстве',storage:'ХРАНИЛИЩЕ',func:'Функции:',runSel:'сканировать выбранную папку',info:'ИНФОРМАЦИЯ',by:'ПРИЛОЖЕНИЕ СОЗДАЛ',all:'(все диски)',needBat:'Для реального скана нужен HARIDAWG.bat. Закройте и откройте через HARIDAWG.bat.',scanning:'СКАНИРОВАНИЕ...',done:'СКАН ЗАВЕРШЁН',none:'Ничего не требует внимания.',nothing:'Ничего не выбрано. Запустите SCAN, отметьте пункты, затем DELETE.',confirmDel:'Переместить выбранные файлы в карантин?',restart:'ПЕРЕЗАПУСК...'}
+  };
+  var qs=new URLSearchParams(location.search),lang=qs.get('lang');
+  try{lang=lang||localStorage.getItem('hrd_lang')}catch(e){}
+  lang=lang||(navigator.language||'en').slice(0,2);if(!L[lang])lang='en';
+  function t(k){return (L[lang]&&L[lang][k])||L.en[k]||k}
+  document.querySelectorAll('[data-i]').forEach(function(e){e.textContent=t(e.getAttribute('data-i'))});
+  $('lang').value=lang;
+  $('lang').addEventListener('change',function(){
+    var v=this.value;try{localStorage.setItem('hrd_lang',v)}catch(e){}
+    var b=$('boot');b.style.animation='none';b.style.opacity=1;b.style.visibility='visible';b.firstChild.textContent=L[v].restart;
+    setTimeout(function(){qs.set('lang',v);location.search=qs.toString()},900);
+  });
+
+  /* ---------- clock ---------- */
+  var DAYS=['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY'];
+  function p2(n){return String(n).padStart(2,'0')}
+  function tick(){
+    var n=new Date();
+    $('day').textContent=DAYS[n.getUTCDay()];
+    $('utcClock').textContent=p2(n.getUTCHours())+':'+p2(n.getUTCMinutes())+':'+p2(n.getUTCSeconds())+' UTC';
+  }
+  tick();setInterval(tick,1000);
+
+  /* ---------- accordions ---------- */
+  document.querySelectorAll('.acc>button.head').forEach(function(b){
+    b.addEventListener('click',function(){
+      var a=b.parentElement,o=a.classList.toggle('open');
+      b.setAttribute('aria-expanded',o);
+    });
+  });
+
+  /* ---------- folder ---------- */
+  var SI=window.HARIDAWG_SYSINFO||null;
+  var home=SI&&SI.home?SI.home:null;
+  function setFolder(p){window.curFolder=p||'';$('folderPath').textContent=p||t('all')}
+  document.querySelectorAll('[data-q]').forEach(function(c){
+    c.addEventListener('click',function(){
+      var q=c.getAttribute('data-q');
+      setFolder(q?(home?home+'\\'+q:'%USERPROFILE%\\'+q):'');
+    });
+  });
+  $('setFolder').addEventListener('click',function(){
+    var v=$('folderInput').value.trim();
+    if(v){setFolder(v);$('folderInput').value=''}
+  });
+  $('folderInput').addEventListener('keydown',function(e){if(e.key==='Enter')$('setFolder').click()});
+  if(home)setFolder(home+'\\Downloads');
+
+  /* ---------- device info ---------- */
+  var GB=1073741824,TB=GB*1024;
+  function fmt(b){return b>=TB?(b/TB).toFixed(2)+' TB':(b/GB).toFixed(b>=100*GB?0:1)+' GB'}
+  function color(p){return p>=90?'#f87171':p>=75?'#fbbf24':'#22d3ee'}
+  var disks=[];
+
+  function renderDisks(){
+    var box=$('disks');box.innerHTML='';
+    var tf=0,tt=0;
+    if(!disks.length){
+      box.innerHTML='<div class="mono" style="font-size:12px;color:var(--muted)">No drive data. Run HARIDAWG.bat to read real drives, or add one below.</div>';
+    }
+    disks.forEach(function(d){
+      tf+=d.free;tt+=d.total;
+      var used=d.total>0?Math.min(100,Math.max(0,(d.total-d.free)/d.total*100)):0;
+      var el=document.createElement('div');el.className='disk';
+      var kv=document.createElement('div');kv.className='kv';
+      var l=document.createElement('span');l.style.color='var(--cyan)';
+      l.textContent='DISK '+d.name+(d.label?'  ('+d.label+')':'');
+      var r=document.createElement('span');
+      r.textContent=fmt(d.free)+' free / '+fmt(d.total)+' total';
+      kv.appendChild(l);kv.appendChild(r);
+      var bar=document.createElement('div');bar.className='bar';
+      var i=document.createElement('i');i.style.width=used.toFixed(1)+'%';i.style.background=color(used);
+      bar.appendChild(i);el.appendChild(kv);el.appendChild(bar);box.appendChild(el);
+    });
+    $('stSum').textContent=disks.length?('Total free: '+fmt(tf)+' / '+fmt(tt)):'--';
+  }
+
+  function setRam(totalB,freeB,approx){
+    var used=totalB-freeB,pct=totalB>0?used/totalB*100:0;
+    $('ramTag').textContent=(approx?'>= ':'')+(totalB/GB).toFixed(approx?0:1)+' GB';
+    if(freeB!=null){
+      $('ramTxt').textContent=(used/GB).toFixed(1)+' GB / '+(totalB/GB).toFixed(1)+' GB ('+Math.round(pct)+'%)';
+      $('ramBar').style.width=pct+'%';
+    }else{
+      $('ramTxt').textContent='live usage needs HARIDAWG.bat';
+      $('ramBar').style.width='0';
+    }
+  }
+
+  var note=$('devNote');
+  if(SI){
+    if(SI.ram)setRam(SI.ram.total,SI.ram.free,false);
+    var c=SI.cpu||{};
+    $('cpuName').textContent=c.name||'Unknown CPU';
+    $('cpuTag').textContent=(c.cores||'?')+' Cores / '+(c.threads||'?')+' Threads';
+    $('cpuClock').textContent=c.maxMHz?('Max clock: '+(c.maxMHz/1000).toFixed(2)+' GHz'):'';
+    $('cpuLoad').textContent=(c.load!=null)?('Load: '+c.load+'%'):'';
+    disks=(SI.disks||[]).filter(function(d){return d.total>0}).map(function(d){
+      return {name:d.name,label:d.label||'',free:d.free,total:d.total};
+    });
+    renderDisks();
+  }else{
+    note.style.display='block';
+    note.textContent='Browser mode: a web page cannot read your real drives. Open the app with HARIDAWG.bat to show C:, D:, E: and exact RAM/CPU.';
+    var mem=navigator.deviceMemory;
+    if(mem)setRam(mem*GB,null,true);else{$('ramTag').textContent='n/a';$('ramTxt').textContent='not exposed by this browser'}
+    var th=navigator.hardwareConcurrency;
+    $('cpuName').textContent=(navigator.platform||'Unknown platform');
+    $('cpuTag').textContent=th?th+' Threads':'n/a';
+    $('cpuClock').textContent='CPU model hidden by browser';
+    if(navigator.storage&&navigator.storage.estimate){
+      navigator.storage.estimate().then(function(e){
+        if(e.quota){disks=[{name:'Browser storage',label:'this app only',free:e.quota-(e.usage||0),total:e.quota}];renderDisks()}
+      });
+    }
+    renderDisks();
+  }
+
+  $('addDisk').addEventListener('click',function(){
+    var n=$('dName').value.trim();
+    var f=parseFloat($('dFree').value),t=parseFloat($('dTotal').value);
+    if(!n||!(t>0))return;
+    if(!(f>=0))f=t;
+    disks.push({name:n.toUpperCase(),label:'',free:Math.min(f,t)*GB,total:t*GB});
+    $('dName').value='';$('dFree').value='';$('dTotal').value='';
+    renderDisks();
+  });
+
+  /* ---------- scan / delete (real, via HARIDAWG.bat) ---------- */
+  var tok=qs.get('t'),bridge=!!tok&&location.protocol.indexOf('http')===0,poll=null,seen=0;
+  function api(p,o){return fetch(p+(p.indexOf('?')<0?'?':'&')+'t='+tok,o).then(function(r){return r.json()})}
+  function log(s){$('logbox').style.display='block';var e=$('logs');e.textContent+=s+'\n';e.scrollTop=e.scrollHeight}
+  if(bridge)setInterval(function(){api('/api/ping').catch(function(){})},3000);
+  function renderFinds(f){
+    var box=$('finds');box.innerHTML='';
+    if(!f||!f.length){log(t('none'));return}
+    f.forEach(function(x){
+      var r=document.createElement('label');r.className='find';
+      var c=document.createElement('input');c.type='checkbox';c.value=x.path;
+      var s=document.createElement('span');s.textContent=x.path+'  ['+x.reason+']';
+      r.appendChild(c);r.appendChild(s);box.appendChild(r);
+    });
+  }
+  function runScan(){
+    $('logs').textContent='';$('finds').innerHTML='';seen=0;
+    if(!bridge){log(t('needBat'));return}
+    var st=$('status'),T=$('sTitle'),P=$('sPct'),B=$('sBar'),Lg=$('sLog');
+    st.classList.add('show');T.style.color='var(--cyan)';T.textContent=t('scanning');
+    B.style.width='0';B.style.background='linear-gradient(90deg,#06b6d4,#34d399)';
+    api('/api/scan?folder='+encodeURIComponent(window.curFolder||''),{method:'POST'}).then(function(){
+      clearInterval(poll);
+      poll=setInterval(function(){api('/api/state').then(function(s){
+        (s.logs||[]).slice(seen).forEach(log);seen=(s.logs||[]).length;
+        P.textContent=s.pct+'%';B.style.width=s.pct+'%';Lg.textContent=s.stage;
+        if(s.done){clearInterval(poll);T.style.color='var(--green)';T.textContent=t('done');renderFinds(s.findings)}
+      })},700);
+    });
+  }
+  function runDel(){
+    if(!bridge){log(t('needBat'));return}
+    var sel=Array.prototype.map.call(document.querySelectorAll('#finds input:checked'),function(c){return c.value});
+    if(!sel.length){log(t('nothing'));return}
+    if(!confirm(t('confirmDel')+' ('+sel.length+')'))return;
+    api('/api/quarantine',{method:'POST',body:JSON.stringify(sel)}).then(function(r){(r.logs||[]).forEach(log)});
+  }
+  $('btnScan').addEventListener('click',runScan);
+  $('btnScan2').addEventListener('click',runScan);
+  $('btnDel').addEventListener('click',runDel);
+
+  /* ---------- falling code ---------- */
+  var cv=$('rain'),cx=cv.getContext('2d');
+  if(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  var FS=16,cols,drops,speed,W,H;
+  var CH='01{}[]()<>/\\=+*&#$%@!?:;_|~^ABCDEFabcdef0123456789xyz'+'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホ';
+  var WORDS=['0x','if(','for(','int ','void ','try{','=>','&&','||','NULL','GET','sudo ','cmd','rm -rf','scan()','hash','exe','dll','sys','0xFF','</>'];
+  var streams;
+  function size(){
+    var d=window.devicePixelRatio||1;
+    W=innerWidth;H=innerHeight;
+    cv.width=W*d;cv.height=H*d;cx.setTransform(d,0,0,d,0,0);
+    cols=Math.ceil(W/FS);
+    drops=[];speed=[];streams=[];
+    for(var i=0;i<cols;i++){
+      drops[i]=Math.random()*(H/FS)*1.2-8;
+      speed[i]=.25+Math.random()*.75;
+      streams[i]={txt:'',pos:0};
+    }
+    cx.fillStyle='#080d1a';cx.fillRect(0,0,W,H);
+  }
+  function nextChar(i){
+    var s=streams[i];
+    if(s.pos>=s.txt.length){
+      if(Math.random()<.12){s.txt=WORDS[(Math.random()*WORDS.length)|0];s.pos=0}
+      else return CH.charAt((Math.random()*CH.length)|0);
+    }
+    return s.txt.charAt(s.pos++);
+  }
+  var last=0;
+  function frame(t){
+    requestAnimationFrame(frame);
+    if(document.hidden||t-last<33)return;
+    last=t;
+    cx.fillStyle='rgba(8,13,26,.12)';cx.fillRect(0,0,W,H);
+    cx.font='bold '+FS+'px Consolas,"Cascadia Mono",monospace';
+    for(var i=0;i<cols;i++){
+      var y=drops[i]*FS;
+      if(y>-FS&&y<H+FS){
+        var x=i*FS;
+        cx.fillStyle='#34d399';cx.shadowBlur=0;
+        var c=nextChar(i);
+        // bright head
+        cx.fillStyle='#e0f2fe';cx.shadowColor='#22d3ee';cx.shadowBlur=8;
+        cx.fillText(c,x,y);
+        // trail char one step behind
+        cx.shadowBlur=0;cx.fillStyle=(i%5===0)?'#38bdf8':'#22d3ee';
+        cx.fillText(CH.charAt((Math.random()*CH.length)|0),x,y-FS);
+      }
+      drops[i]+=speed[i];
+      if(drops[i]*FS>H&&Math.random()>.975){drops[i]=Math.random()*-20;speed[i]=.25+Math.random()*.75}
+    }
+  }
+  size();addEventListener('resize',size);
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
