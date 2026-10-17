@@ -1,0 +1,15 @@
+name: release-app
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: write
+jobs:
+  pack:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: cd app && zip -r ../HARIDAWG-APP.zip HARIDAWG-APP
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: HARIDAWG-APP.zip
